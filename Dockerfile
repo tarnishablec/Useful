@@ -1,0 +1,51 @@
+FROM gitlab/gitlab-runner
+MAINTAINER Tarnis <tarnishablec@outlook.com>
+
+# 修改软件源
+RUN echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' > /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list && \
+    apt-get update -y && \
+    apt-get clean
+
+# 安装 Docker
+RUN apt-get -y install apt-transport-https ca-certificates curl software-properties-common && \
+    curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | apt-key add - && \
+    add-apt-repository "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable" && \
+    apt-get update -y && \
+    apt-get install -y docker-ce
+COPY daemon.json /etc/docker/daemon.json
+
+# 安装 Docker Compose
+WORKDIR /usr/local/bin
+RUN curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+RUN chmod +x docker-compose
+
+# 安装 Java
+RUN mkdir -p /usr/local/java
+WORKDIR /usr/local/java
+RUN wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz
+RUN tar -zxvf jdk-8u201-linux-x64.tar.gz && \
+    rm -fr jdk-8u201-linux-x64.tar.gz
+
+# 安装 Maven
+RUN mkdir -p /usr/local/maven
+WORKDIR /usr/local/maven
+RUN wget http://mirrors.tuna.tsinghua.edu.cn/apache/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz
+RUN tar -zxvf apache-maven-3.6.0-bin.tar.gz && \
+    rm -fr apache-maven-3.6.0-bin.tar.gz
+# COPY settings.xml /usr/local/maven/apache-maven-3.6.0/conf/settings.xml
+
+# 配置环境变量
+ENV JAVA_HOME /usr/local/java/jdk1.8.0_201
+ENV MAVEN_HOME /usr/local/maven/apache-maven-3.6.0
+ENV PATH $PATH:$JAVA_HOME/bin:$MAVEN_HOME/bin
+
+WORKDIR /
