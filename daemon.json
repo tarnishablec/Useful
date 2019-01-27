@@ -1,0 +1,8 @@
+{
+  "registry-mirrors": [
+    "https://registry.docker-cn.com"
+  ],
+  "insecure-registries": [
+    "ip:5000"
+  ]
+}
